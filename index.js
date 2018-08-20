@@ -24,7 +24,8 @@ if(!args.year) {
 
 var processedContracts = 0,
     promisesReturned = 0;
-const query = {'contracts.0.period.startDate': {$gt: args.year + '-01-01T00:00:000Z', $lt: args.year + '-12-31T23:59:599Z'}};
+// const query = {'contracts.period.startDate': {$gt: args.year + '-01-01T00:00:000Z', $lt: args.year + '-12-31T23:59:599Z'}};
+const query = {'contracts.period.startDate': {$gt: new Date(args.year + '-01-01T00:00:00.000Z'), $lt: new Date(args.year + '-12-31T23:59:59.000Z')}}
 
 // Connection URL
 const url = 'mongodb://localhost:27017/' + args.database;
@@ -40,6 +41,7 @@ const db = monk(url)
                             // 1: empresas
                             // 2: entidades
                             var entities = extractEntities(contract);
+
                             let upsertPromises = [];
 
                             if(entities[0].length > 0) {
@@ -54,7 +56,7 @@ const db = monk(url)
                                 upsertPromises.push(upsertEntidades(entities[2], db));
                                 pause();
                             }
-
+                            
                             Promise.all(upsertPromises).then((results) => {
                                 resume();
                                 promisesReturned++;
@@ -71,6 +73,7 @@ const db = monk(url)
                         } )
                         .then( () => {
                             console.log('Processed: ' + processedContracts);
-                        } );                });
+                        } );
+                });
             } )
             .catch( (err) => { console.log('Error connecting to ' + args.database, err) } );
