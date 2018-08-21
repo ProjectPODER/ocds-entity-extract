@@ -56,7 +56,7 @@ const db = monk(url)
                                 upsertPromises.push(upsertEntidades(entities[2], db));
                                 pause();
                             }
-                            
+
                             Promise.all(upsertPromises).then((results) => {
                                 resume();
                                 promisesReturned++;
