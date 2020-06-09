@@ -6,7 +6,7 @@ Este script toma como base una colección de Mongo con documentos en el formato 
 
 Desde el directorio raíz:
 
-    node index.js -d quienesquienwiki -c contracts_ocds -y 2018
+    node index.js -d BASE_DE_DATOS -c COLECCION
 
 ## Opciones
 
@@ -14,4 +14,6 @@ El script acepta las siguientes opciones como argumentos:
 
     --database -d       El nombre de la base de datos que contiene los contratos
     --collection -c     El nombre de la colección de documentos OCDS
-    --year -y           El año de los contratos de los que se desea extraer las entidades
+    --host -h           Host para conectarse a MongoDB (si requiere autenticación, host es "user@pass:hostname")
+    --port -p           Puerto para conectarse a MongoDB
+    --test -t           Parámetro especial para realizar una prueba definida en el código
