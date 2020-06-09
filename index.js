@@ -1,15 +1,18 @@
 #!/usr/bin/env node
+let hrstart = process.hrtime();
+let hrend = 0;
+
+const extractEntities = require('./lib/extract');
+const sendToDB = require('./lib/insert');
 const monk = require('monk');
 const commandLineArgs = require('command-line-args');
-const extractEntities = require('./lib/extract');
-const { upsertPersonas,
-        upsertEmpresas,
-        upsertEntidades } = require('./lib/upsert');
 
 const optionDefinitions = [
     { name: 'database', alias: 'd', type: String },
     { name: 'collection', alias: 'c', type: String },
-    { name: 'year', alias: 'y', type: String }
+    { name: 'host', alias: 'h', type: String },
+    { name: 'port', alias: 'p', type: String },
+    { name: 'test', alias: 't', type: String }
 ];
 const args = commandLineArgs(optionDefinitions);
 
@@ -17,63 +20,89 @@ if(!args.database || !args.collection) {
     console.log('ERROR: no database or collection specified.');
     process.exit(1);
 }
-if(!args.year) {
-    console.log('ERROR: you must specify a year.');
-    process.exit(1);
+
+let query = null;
+if(args.test) {
+    query = { 'compiledRelease.parties.contactPoint.id': {$in: ["manuel-basilio-orozco-ruiz"] } }
+    // query = { 'compiledRelease.parties.id':'subdireccion-de-recursos-materiales-secretaria-de-salud' }
+}
+else {
+    query = {}
 }
 
-var processedContracts = 0,
-    promisesReturned = 0;
-// const query = {'contracts.period.startDate': {$gt: args.year + '-01-01T00:00:000Z', $lt: args.year + '-12-31T23:59:599Z'}};
-const query = {'contracts.period.startDate': {$gt: new Date(args.year + '-01-01T00:00:00.000Z'), $lt: new Date(args.year + '-12-31T23:59:59.000Z')}}
+// Connect to MongoDB
+const url = 'mongodb://' + (args.host ? args.host : 'localhost') + ':' + (args.port ? args.port : '27017') + '/' + args.database;
+const db = monk(url);
 
-// Connection URL
-const url = 'mongodb://localhost:27017/' + args.database;
-const db = monk(url)
-            .then( (db) => {
-                console.log('Connected to ' + args.database + '...');
-                const contracts = db.get(args.collection, { castIds: false });
-                contracts.count(query, function(error, count) {
-                    processedContracts = count;
-                    contracts.find(query)
-                        .each( (contract, {close, pause, resume}) => {
-                            // 0: personas
-                            // 1: empresas
-                            // 2: entidades
-                            var entities = extractEntities(contract);
+let entities = {
+    companies: {
+        items: [],
+        index: []
+    },
+    institutions: {
+        items: [],
+        index: []
+    },
+    states: {
+        items: [],
+        index: []
+    },
+    persons: {
+        items: [],
+        index: []
+    },
+    memberships: {
+        items: [],
+        index: []
+    }
+}
 
-                            let upsertPromises = [];
+db.then( (db) => {
+    console.log('Connected to ' + args.database + '...');
+    const records = db.get(args.collection);
+    let processed = 0;
+    records.find(query)
+        .each( (record, {close, pause, resume}) => {
+            let c_release = record.compiledRelease;
+            let releases = record.releases;
+            processed++;
+            console.log(processed, c_release.ocid)
+            extractEntities(c_release, releases, entities);
+            release = null;
+        } )
+        .then( () => {
+            if(args.test) {
+                console.log(JSON.stringify(entities, null, 4));
+                process.exit();
+            }
+            console.log('Extraction complete! Sending to DB...');
+            sendToDB(entities, db)
+            .then( ( results ) => {
+                db.close();
+                hrend = process.hrtime(hrstart);
+                console.log('-------------------------------');
+                console.log('Persons found: ' + entities.persons.items.length);
+                console.log('Inserted ' + results[0].nInserted + ' persons.')
+                console.log('-------------------------------');
+                console.log('Companies found: ' + entities.companies.items.length);
+                console.log('Inserted ' + results[1].nInserted + ' companies.')
+                console.log('-------------------------------');
+                console.log('Institutions found: ' + entities.institutions.items.length);
+                console.log('Inserted ' + results[2].nInserted + ' institutions.')
+                console.log('-------------------------------');
+                console.log('States/Municipalities found: ' + entities.states.items.length);
+                console.log('Inserted ' + results[3].nInserted + ' states/municipalities.')
+                console.log('-------------------------------');
+                console.log('Memberships found: ' + entities.memberships.items.length);
+                console.log('Inserted ' + results[4].nInserted + ' memberships.')
+                console.log('-------------------------------');
+                console.log('Processed records: ' + processed);
+                console.log('Duration: ' + hrend[0] + '.' + hrend[1] + 's');
 
-                            if(entities[0].length > 0) {
-                                upsertPromises.push(upsertPersonas(entities[0], db));
-                                pause();
-                            }
-                            if(entities[1].length > 0) {
-                                upsertPromises.push(upsertEmpresas(entities[1], db));
-                                pause();
-                            }
-                            if(entities[2].length > 0) {
-                                upsertPromises.push(upsertEntidades(entities[2], db));
-                                pause();
-                            }
-
-                            Promise.all(upsertPromises).then((results) => {
-                                resume();
-                                promisesReturned++;
-                                if(promisesReturned == processedContracts) {
-                                    console.log('------------------------------');
-                                    console.log('Processed ' + processedContracts + ' contracts.');
-                                    console.log('------------------------------');
-                                    console.log('Disconnecting...');
-                                    db.close();
-                                    console.log('Connection closed.');
-                                    process.exit(0);
-                                }
-                            }).catch(e => { throw e });
-                        } )
-                        .then( () => {
-                            console.log('Processed: ' + processedContracts);
-                        } );
-                });
-            } )
-            .catch( (err) => { console.log('Error connecting to ' + args.database, err) } );
+                // Cleanup...
+                entities = null;
+                process.exit();
+            } );
+        } )
+} )
+.catch( (err) => { console.log(err); } );
