@@ -35,26 +35,11 @@ const url = 'mongodb://' + (args.host ? args.host : 'localhost') + ':' + (args.p
 const db = monk(url);
 
 let entities = {
-    companies: {
-        items: [],
-        index: []
-    },
-    institutions: {
-        items: [],
-        index: []
-    },
-    states: {
-        items: [],
-        index: []
-    },
-    persons: {
-        items: [],
-        index: []
-    },
-    memberships: {
-        items: [],
-        index: []
-    }
+    companies: {},
+    institutions: {},
+    states: {},
+    persons: {},
+    memberships: {}
 }
 
 db.then( (db) => {
@@ -81,19 +66,19 @@ db.then( (db) => {
                 db.close();
                 hrend = process.hrtime(hrstart);
                 console.log('-------------------------------');
-                console.log('Persons found: ' + entities.persons.items.length);
+                console.log('Persons found: ' + Object.keys(entities.persons).length);
                 console.log('Inserted ' + results[0].nInserted + ' persons.')
                 console.log('-------------------------------');
-                console.log('Companies found: ' + entities.companies.items.length);
+                console.log('Companies found: ' + Object.keys(entities.companies).length);
                 console.log('Inserted ' + results[1].nInserted + ' companies.')
                 console.log('-------------------------------');
-                console.log('Institutions found: ' + entities.institutions.items.length);
+                console.log('Institutions found: ' + Object.keys(entities.institutions).length);
                 console.log('Inserted ' + results[2].nInserted + ' institutions.')
                 console.log('-------------------------------');
-                console.log('States/Municipalities found: ' + entities.states.items.length);
+                console.log('States/Municipalities found: ' + Object.keys(entities.states).length);
                 console.log('Inserted ' + results[3].nInserted + ' states/municipalities.')
                 console.log('-------------------------------');
-                console.log('Memberships found: ' + entities.memberships.items.length);
+                console.log('Memberships found: ' + Object.keys(entities.memberships).length);
                 console.log('Inserted ' + results[4].nInserted + ' memberships.')
                 console.log('-------------------------------');
                 console.log('Processed records: ' + processed);
