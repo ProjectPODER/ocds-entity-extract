@@ -6,13 +6,14 @@ const extractEntities = require('./lib/extract');
 const sendToDB = require('./lib/insert');
 const monk = require('monk');
 const commandLineArgs = require('command-line-args');
+const _ = require('lodash');
 
 const optionDefinitions = [
     { name: 'database', alias: 'd', type: String },
     { name: 'collection', alias: 'c', type: String },
     { name: 'host', alias: 'h', type: String },
     { name: 'port', alias: 'p', type: String },
-    { name: 'test', alias: 't', type: String }
+    { name: 'test', alias: 't', type: Boolean }
 ];
 const args = commandLineArgs(optionDefinitions);
 
@@ -24,6 +25,7 @@ if(!args.database || !args.collection) {
 let query = null;
 if(args.test) {
     query = { 'compiledRelease.parties.contactPoint.id': {$in: ["manuel-basilio-orozco-ruiz"] } }
+    console.log("Testing",query);
     // query = { 'compiledRelease.parties.id':'subdireccion-de-recursos-materiales-secretaria-de-salud' }
 }
 else {
@@ -48,8 +50,11 @@ db.then( (db) => {
     let processed = 0;
     records.find(query)
         .each( (record, {close, pause, resume}) => {
-            let c_release = record.compiledRelease;
-            let releases = record.releases;
+            const localRecord = _.clone(record);
+            delete record;
+
+            let c_release = localRecord.compiledRelease;
+            let releases = localRecord.releases;
             processed++;
             console.log(processed, c_release.ocid)
             extractEntities(c_release, releases, entities);
