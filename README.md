@@ -17,3 +17,17 @@ El script acepta las siguientes opciones como argumentos:
     --host -h           Host para conectarse a MongoDB (si requiere autenticación, host es "user@pass:hostname")
     --port -p           Puerto para conectarse a MongoDB
     --test -t           Parámetro especial para realizar una prueba definida en el código
+    --classifiers -x    Listado de rutas a archivos CSV que contienen nombres de entidades preclasificadas a "person" o "company"
+
+## Listados clasificadores
+
+Con la opción **-x --classifiers** es posible especificar una preclasificación para las entidades que existen dentro de los records OCDS.
+
+Los archivos a los que se hace referencia con este argumento deben contener la siguiente estructura columnar
+
+    0: Nombre de la entidad (string)
+    1: Clasificación (string: "person" o "company")
+
+## Listados unificadores
+
+// TODO...

@@ -5,6 +5,7 @@ let hrend = 0;
 const extractEntities = require('./lib/extract');
 const sendToDB = require('./lib/insert');
 const streamOut = require('./lib/stream');
+const buildClassifierList = require('./lib/classify');
 const monk = require('monk');
 const commandLineArgs = require('command-line-args');
 const _ = require('lodash');
@@ -15,6 +16,7 @@ const optionDefinitions = [
     { name: 'host', alias: 'h', type: String, defaultValue: 'localhost' },
     { name: 'port', alias: 'p', type: String, defaultValue: '27017' },
     { name: 'output', alias: 'o', type: String, defaultValue: 'stream' },
+    { name: 'classifiers', alias: 'x', type: String, multiple: true },
     { name: 'test', alias: 't', type: Boolean }
 ];
 const args = commandLineArgs(optionDefinitions);
@@ -27,6 +29,11 @@ if(args.output != 'db' && args.output != 'stream') {
     console.log('ERROR: unsupported output value ' + args.output);
     console.log('Supported values are: \n* db\n* stream');
     process.exit(1);
+}
+
+let classifierList = null;
+if(args.classifiers) {
+    classifierList = buildClassifierList(args.classifiers);
 }
 
 let query = null;
@@ -62,7 +69,7 @@ db.then( (db) => {
             processed++;
 
             if(args.output == 'db') console.log(processed, c_release.ocid)
-            extractEntities(c_release, releases, entities);
+            extractEntities(c_release, releases, entities, classifierList);
 
             // Cleanup...
             delete releases;
