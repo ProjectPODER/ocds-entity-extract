@@ -38,8 +38,9 @@ if(args.classifiers) {
 
 let query = null;
 if(args.test) {
-    query = { 'compiledRelease.parties.contactPoint.id': {$in: ["manuel-basilio-orozco-ruiz"] } }
+    query = {};
     console.log("Testing",query);
+    // query = { 'compiledRelease.parties.contactPoint.id': {$in: ["manuel-basilio-orozco-ruiz"] } };
     // query = { 'compiledRelease.parties.id':'subdireccion-de-recursos-materiales-secretaria-de-salud' }
 }
 else {
@@ -78,7 +79,8 @@ db.then( (db) => {
         } )
         .then( () => {
             if(args.test) {
-                streamOut(entities);
+                console.log('Testing complete.');
+                process.exit(1);
             }
             else if(args.output == 'db') {
                 console.log('Extraction complete! Sending to DB...');
