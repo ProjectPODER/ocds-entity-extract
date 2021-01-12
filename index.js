@@ -61,6 +61,18 @@ let entities = {
 
 db.then( (db) => {
     if(args.output == 'db') console.log('Connected to ' + args.database + '...');
+
+    if(!args.test) {
+        const db_areas = db.get('areas_ocds');
+        db_areas.drop();
+        const db_memberships = db.get('memberships_ocds');
+        db_memberships.drop();
+        const db_organizations = db.get('organizations_ocds');
+        db_organizations.drop();
+        const db_persons = db.get('persons_ocds');
+        db_persons.drop();
+    }
+
     const records = db.get(args.collection);
     let processed = 0;
     records.find(query)
