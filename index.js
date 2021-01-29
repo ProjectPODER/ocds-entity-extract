@@ -62,15 +62,15 @@ let entities = {
 db.then( (db) => {
     if(args.output == 'db') console.log('Connected to ' + args.database + '...');
 
-    if(!args.test) {
+    if(!args.test) { // TODO: qué pasa si no existen las colecciones?
         const db_areas = db.get('areas_ocds');
-        db_areas.drop();
+        if(db_areas) db_areas.drop();
         const db_memberships = db.get('memberships_ocds');
-        db_memberships.drop();
+        if(db_memberships) db_memberships.drop();
         const db_organizations = db.get('organizations_ocds');
-        db_organizations.drop();
+        if(db_organizations) db_organizations.drop();
         const db_persons = db.get('persons_ocds');
-        db_persons.drop();
+        if(db_persons) db_persons.drop();
     }
 
     const records = db.get(args.collection);
@@ -91,6 +91,7 @@ db.then( (db) => {
         } )
         .then( () => {
             if(args.test) {
+                console.log(entities);
                 console.log('Testing complete.');
                 process.exit(1);
             }
