@@ -40,8 +40,6 @@ let query = null;
 if(args.test) {
     query = {};
     console.log("Testing",query);
-    // query = { 'compiledRelease.parties.contactPoint.id': {$in: ["manuel-basilio-orozco-ruiz"] } };
-    // query = { 'compiledRelease.parties.id':'subdireccion-de-recursos-materiales-secretaria-de-salud' }
 }
 else {
     query = {}
