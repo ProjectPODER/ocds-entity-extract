@@ -39,6 +39,7 @@ if(args.classifiers) {
 let query = null;
 if(args.test) {
     query = {};
+    // query = { 'ocid': 'ocds-0ud2q6-LA-008000999-E35-2019' };
     console.log("Testing",query);
 }
 else {
@@ -54,13 +55,16 @@ let entities = {
     institutions: {},
     states: {},
     persons: {},
-    memberships: {}
+    memberships: {},
+    products: {}
 }
+
+let productIndex = {};
 
 db.then( (db) => {
     if(args.output == 'db') console.log('Connected to ' + args.database + '...');
 
-    if(!args.test) { // TODO: qué pasa si no existen las colecciones?
+    if(!args.test) {
         const db_areas = db.get('areas_ocds');
         if(db_areas) db_areas.drop();
         const db_memberships = db.get('memberships_ocds');
@@ -69,63 +73,75 @@ db.then( (db) => {
         if(db_organizations) db_organizations.drop();
         const db_persons = db.get('persons_ocds');
         if(db_persons) db_persons.drop();
+        const db_products = db.get('products_ocds');
+        if(db_products) db_products.drop();
     }
 
-    const records = db.get(args.collection);
-    let processed = 0;
-    records.find(query)
-        .each( (record, {close, pause, resume}) => {
-            let c_release = record.compiledRelease;
-            let releases = record.releases;
-            processed++;
+    const products = db.get('products_cbmei'); // TODO: make this a command line arg
+    products.find()
+        .each( (product, {close, pause, resume}) => {
+            if( !productIndex.hasOwnProperty(product.id) ) productIndex[product.id] = product;
+         } )
+         .then( () => {
+            const records = db.get(args.collection);
+            let processed = 0;
+            records.find(query)
+                .each( (record, {close, pause, resume}) => {
+                    let c_release = record.compiledRelease;
+                    let releases = record.releases;
+                    processed++;
 
-            if(args.output == 'db') console.log(processed, c_release.ocid)
-            extractEntities(c_release, releases, entities, classifierList);
-
-            // Cleanup...
-            delete releases;
-            delete c_release;
-            delete record;
-        } )
-        .then( () => {
-            if(args.test) {
-                console.log(entities);
-                console.log('Testing complete.');
-                process.exit(1);
-            }
-            else if(args.output == 'db') {
-                console.log('Extraction complete! Sending to DB...');
-                sendToDB(entities, db)
-                .then( ( results ) => {
-                    db.close();
-                    hrend = process.hrtime(hrstart);
-                    console.log('-------------------------------');
-                    console.log('Persons found: ' + Object.keys(entities.persons).length);
-                    console.log('Inserted ' + results[0].nInserted + ' persons.')
-                    console.log('-------------------------------');
-                    console.log('Companies found: ' + Object.keys(entities.companies).length);
-                    console.log('Inserted ' + results[1].nInserted + ' companies.')
-                    console.log('-------------------------------');
-                    console.log('Institutions found: ' + Object.keys(entities.institutions).length);
-                    console.log('Inserted ' + results[2].nInserted + ' institutions.')
-                    console.log('-------------------------------');
-                    console.log('States/Municipalities found: ' + Object.keys(entities.states).length);
-                    console.log('Inserted ' + results[3].nInserted + ' states/municipalities.')
-                    console.log('-------------------------------');
-                    console.log('Memberships found: ' + Object.keys(entities.memberships).length);
-                    console.log('Inserted ' + results[4].nInserted + ' memberships.')
-                    console.log('-------------------------------');
-                    console.log('Processed records: ' + processed);
-                    console.log('Duration: ' + hrend[0] + '.' + hrend[1] + 's');
+                    if(args.output == 'db' || args.test) console.log(processed, c_release.ocid)
+                    extractEntities(c_release, releases, entities, classifierList, productIndex);
 
                     // Cleanup...
-                    entities = null;
-                    process.exit();
-                } );
-            }
-            else if(args.output == 'stream') {
-                streamOut(entities);
-            }
-        } )
+                    delete releases;
+                    delete c_release;
+                    delete record;
+                } )
+                .then( () => {
+                    if(args.test) {
+                        console.log(JSON.stringify(entities.products, null, 4));
+                        console.log('Testing complete.');
+                        process.exit(1);
+                    }
+                    else if(args.output == 'db') {
+                        console.log('Extraction complete! Sending to DB...');
+                        sendToDB(entities, db)
+                        .then( ( results ) => {
+                            db.close();
+                            hrend = process.hrtime(hrstart);
+                            console.log('-------------------------------');
+                            console.log('Persons found: ' + Object.keys(entities.persons).length);
+                            console.log('Inserted ' + results[0].nInserted + ' persons.')
+                            console.log('-------------------------------');
+                            console.log('Companies found: ' + Object.keys(entities.companies).length);
+                            console.log('Inserted ' + results[1].nInserted + ' companies.')
+                            console.log('-------------------------------');
+                            console.log('Institutions found: ' + Object.keys(entities.institutions).length);
+                            console.log('Inserted ' + results[2].nInserted + ' institutions.')
+                            console.log('-------------------------------');
+                            console.log('States/Municipalities found: ' + Object.keys(entities.states).length);
+                            console.log('Inserted ' + results[3].nInserted + ' states/municipalities.')
+                            console.log('-------------------------------');
+                            console.log('Memberships found: ' + Object.keys(entities.memberships).length);
+                            console.log('Inserted ' + results[4].nInserted + ' memberships.')
+                            console.log('-------------------------------');
+                            console.log('Products found: ' + Object.keys(entities.products).length);
+                            console.log('Inserted ' + results[5].nInserted + ' products.')
+                            console.log('-------------------------------');
+                            console.log('Processed records: ' + processed);
+                            console.log('Duration: ' + hrend[0] + '.' + hrend[1] + 's');
+
+                            // Cleanup...
+                            entities = null;
+                            process.exit();
+                        } );
+                    }
+                    else if(args.output == 'stream') {
+                        streamOut(entities);
+                    }
+                } )
+        } );
 } )
 .catch( (err) => { console.log(err); } );
