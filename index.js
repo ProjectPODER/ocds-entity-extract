@@ -38,13 +38,10 @@ if(args.classifiers) {
 
 let query = {};
 if(args.test) {
-    // query = { '$or': [
-    //     { 'compiledRelease.parties.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' },
-    //     { 'compiledRelease.parties.memberOf.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' }
-    // ] };
-    // query = { 'ocid': 'ocds-0ud2q6-LA-008000999-E35-2019' };
-    // query = { 'ocid': 'ocds-0ud2q6-JAL-1177-7963' };
-    // query = { 'compiledRelease.source.id': 'comprasimss' }
+    query = { '$or': [
+        { 'compiledRelease.parties.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' },
+        { 'compiledRelease.parties.memberOf.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' }
+    ] };
     console.log("Testing",query);
 }
 
