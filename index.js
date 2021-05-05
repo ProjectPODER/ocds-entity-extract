@@ -38,10 +38,11 @@ if(args.classifiers) {
 
 let query = {};
 if(args.test) {
-    query = { '$or': [
-        { 'compiledRelease.parties.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' },
-        { 'compiledRelease.parties.memberOf.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' }
-    ] };
+    // query = { '$or': [
+    //     { 'compiledRelease.parties.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' },
+    //     { 'compiledRelease.parties.memberOf.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' }
+    // ] };
+    query = { 'compiledRelease.source.id': 'comprasimss' }
     console.log("Testing",query);
 }
 
@@ -100,7 +101,7 @@ db.then( (db) => {
                 } )
                 .then( () => {
                     if(args.test) {
-                        console.log(JSON.stringify(entities, null, 4));
+                        console.log(JSON.stringify(entities.institutions, null, 4));
                         console.log('Testing complete.');
                         process.exit(1);
                     }
