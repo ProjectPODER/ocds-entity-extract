@@ -42,7 +42,7 @@ if(args.test) {
     //     { 'compiledRelease.parties.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' },
     //     { 'compiledRelease.parties.memberOf.id': 'grupo-aeroportuario-de-la-ciudad-de-mexico-sa-de-cv' }
     // ] };
-    query = { 'ocid': 'ocds-0ud2q6-LA-019GYN027-N10-2011' }
+    // query = { 'ocid': 'ocds-0ud2q6-PUE-D6P0163-163' }
     console.log("Testing",query);
 }
 
