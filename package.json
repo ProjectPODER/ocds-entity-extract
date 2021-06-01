@@ -1,6 +1,6 @@
 {
   "name": "ocds-entity-extract",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Extracts entities from a collection of OCDS records",
   "main": "index.js",
   "scripts": {
