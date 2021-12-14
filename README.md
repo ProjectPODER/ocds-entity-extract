@@ -1,33 +1,42 @@
 # OCDS Entity Extract
 
-Este script toma como base una colección de Mongo con documentos en el formato OCDS y extrae las personas, organizaciones y entidades estatales.
+This script analyzes OCDS record documents inside a Mongo collection and extracts entity information in Popolo format (persons, organizations, memberships, areas). Additionally, if present, the script can also extract products from purchases.
 
-## Ejemplo de uso
+## Usage
 
-Desde el directorio raíz:
+    node index.js -d DATABASE -c COLLECTION
 
-    node index.js -d BASE_DE_DATOS -c COLECCION
+## Options
 
-## Opciones
+    --database      -d  Name of the Mongo database.
+    --collection    -c  Name of the Mongo collection with OCDS records.
+    --host          -h  Mongo host (for authentication, host is "user@pass:hostname"). Defaults to localhost.
+    --port          -p  Mongo port (defaults to 27017).
+    -- output       -o  Output type (stream | db).
+    --classifiers   -x  List of paths to CSV files with preclassified entity types.
+    --test          -t  Test the script.
 
-El script acepta las siguientes opciones como argumentos:
+## Output
 
-    --database -d       El nombre de la base de datos que contiene los contratos
-    --collection -c     El nombre de la colección de documentos OCDS
-    --host -h           Host para conectarse a MongoDB (si requiere autenticación, host es "user@pass:hostname")
-    --port -p           Puerto para conectarse a MongoDB
-    --test -t           Parámetro especial para realizar una prueba definida en el código
-    --classifiers -x    Listado de rutas a archivos CSV que contienen nombres de entidades preclasificadas a "person" o "company"
+Depending on the specified output type, the script can stream out all JSON objects, one object per line, or insert the documents into the same Mongo database using new collections.
 
-## Listados clasificadores
+When streaming the output, documents are grouped by entity type and streamed in the following order: persons, companies, institutions, states, memberships, products.
 
-Con la opción **-x --classifiers** es posible especificar una preclasificación para las entidades que existen dentro de los records OCDS.
+When inserting into Mongo, collection names are: persons, organizations, areas, memberships, products.
 
-Los archivos a los que se hace referencia con este argumento deben contener la siguiente estructura columnar
+### Object structure
 
-    0: Nombre de la entidad (string)
-    1: Clasificación (string: "person" o "company")
+Entities are generated according to the Popolo standard except areas and products. In addition to extracted information, all documents also contain special summary objects that contain contract counts and amounts for each entity, as well as purchase counts and amounts when contracts contain itemized purchases. Summaries are separated according to the entity's role, enabling the summarization of contract counts and amounts for entities that act as both buyer and supplier in different contracts.
 
-## Listados unificadores
+## Classifier lists
 
-// TODO...
+Using the option **-x --classifiers** it is possible to specify a preclassification for certain named entities into persons and companies, instead of relying on the automatic classification provided by the script.
+
+Files referenced by this option should be in CSV format and contain the following structure:
+
+    0: Entity name (string)
+    1: Classification (string: "person" or "company")
+
+## Testing
+
+When using the -t argument to test the script, output is verbose and no information is inserted into Mongo when database output is selected.
